@@ -1,0 +1,46 @@
+# FastAPI for the GitHub Pages storefront.
+# After the first deploy, set the ShoeScout repo variable NEXT_PUBLIC_API_BASE
+# to this service's URL (https://shoescout-api.onrender.com) and re-run Deploy GitHub Pages.
+# Pages origin is https://amulyavarshney.github.io (no path). CORS and the voice WebSocket use FRONTEND_ORIGIN.
+
+services:
+  - type: web
+    name: shoescout-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m scripts.serve
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.11"
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shoescout-db
+          property: connectionString
+      - key: FRONTEND_ORIGIN
+        value: https://amulyavarshney.github.io
+      - key: MOCK_MODE
+        value: "true"
+      - key: SEED_ON_STARTUP
+        value: "true"
+      - key: RUN_WORKER
+        value: "true"
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_AUTH_SECRET
+        generateValue: true
+      # base64 32-byte key: python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())"
+      - key: CREDENTIALS_ENCRYPTION_KEY_B64
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+databases:
+  - name: shoescout-db
+    plan: free
+    databaseName: shoescout
+    user: shoescout
