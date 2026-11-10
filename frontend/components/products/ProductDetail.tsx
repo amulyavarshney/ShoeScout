@@ -13,6 +13,17 @@ import { LocationPrompt } from "./LocationPrompt"
 import { ProductImage, colorSwatch } from "./ProductCard"
 import { StoreList } from "./StoreList"
 
+function productPageHref(productId: string, groupId: string, size: string | null) {
+  const query = new URLSearchParams({ group: groupId })
+  if (size) query.set("size", size)
+  // Pages can only pre-render a known path. The id travels in the query string.
+  if (process.env.NEXT_PUBLIC_BASE_PATH) {
+    query.set("id", productId)
+    return `/products/placeholder?${query.toString()}`
+  }
+  return `/products/${productId}?${query.toString()}`
+}
+
 export function ProductDetailView({
   productId, initialImageGroup, initialSize, sessionId, locationKnown, locationToken, onLocated, onSimilar, onSelectVariant, asPage,
 }: {
@@ -167,7 +178,7 @@ export function ProductDetailView({
           )}
           {!asPage && (
             <Button asChild variant="ghost" className="rounded-full">
-              <Link href={`/products/${data.product_id}?group=${colorway.image_group_id}${size ? `&size=${size}` : ""}`}>Open full page</Link>
+              <Link href={productPageHref(data.product_id, colorway.image_group_id, size)}>Open full page</Link>
             </Button>
           )}
         </div>

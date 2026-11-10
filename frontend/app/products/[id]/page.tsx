@@ -1,46 +1,20 @@
-"use client"
+import { Suspense } from "react"
 
-import { ArrowLeftIcon } from "lucide-react"
-import Link from "next/link"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { ProductPage } from "./product-page"
 
-import { SiteHeader } from "@/components/layout/site-header"
-import { ProductDetailView } from "@/components/products/ProductDetail"
-import { Button } from "@/components/ui/button"
-import { useVoiceSession } from "@/hooks/use-voice-session"
+// Static hosts can only emit paths known at build time. Real catalogue ids are
+// loaded in the browser; GitHub Pages builds the placeholder route and passes
+// the id as a query param. A normal server build still renders any id.
+export function generateStaticParams() {
+  return [{ id: "placeholder" }]
+}
 
-export default function ProductPage() {
-  const params = useParams<{ id: string }>()
-  const search = useSearchParams()
-  const router = useRouter()
-  const { sessionInfo, manager } = useVoiceSession()
-  const [locationToken, setLocationToken] = useState<string | null>(null)
+export const dynamicParams = true
 
+export default function Page() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader mode={sessionInfo?.mode} />
-      <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-6 sm:px-6">
-        <Button asChild variant="ghost" className="mb-4 -ml-2 rounded-full">
-          <Link href="/">
-            <ArrowLeftIcon className="size-4" /> Back to discovery
-          </Link>
-        </Button>
-        <ProductDetailView
-          productId={params.id}
-          initialImageGroup={search.get("group")}
-          initialSize={search.get("size")}
-          sessionId={sessionInfo?.session_id}
-          locationKnown={!!locationToken}
-          locationToken={locationToken}
-          onLocated={(_l, token) => setLocationToken(token)}
-          onSimilar={(p, color) => {
-            manager?.sendText(`Show me shoes similar to the ${p.brand} ${p.name}${color ? ` in ${color}` : ""}`)
-            router.push("/")
-          }}
-          asPage
-        />
-      </main>
-    </div>
+    <Suspense>
+      <ProductPage />
+    </Suspense>
   )
 }

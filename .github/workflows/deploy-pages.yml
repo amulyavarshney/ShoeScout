@@ -1,0 +1,106 @@
+name: Deploy GitHub Pages
+
+# Static storefront only. The FastAPI backend stays on its own host.
+# Site: https://amulyavarshney.github.io/ShoeScout/
+# Set the Actions variable NEXT_PUBLIC_API_BASE to that public API URL,
+# then set the repo website to the Pages URL so the portfolio shows Live Demo.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "NEXT_PUBLIC_API_BASE (https://….onrender.com)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Static export
+        env:
+          STATIC_EXPORT: "true"
+          NEXT_PUBLIC_BASE_PATH: /ShoeScout
+          NEXT_PUBLIC_API_BASE: ${{ inputs.api_url || vars.NEXT_PUBLIC_API_BASE }}
+        run: |
+          if [ -z "$NEXT_PUBLIC_API_BASE" ]; then
+            echo "::error::Set the NEXT_PUBLIC_API_BASE variable to the public API URL."
+            exit 1
+          fi
+          # output: export rejects dynamicParams: true. The server build keeps it true
+          # so any product id still renders; this Pages build only emits the placeholder.
+          python3 - <<'PY'
+          from pathlib import Path
+          page = Path("app/products/[id]/page.tsx")
+          page.write_text(page.read_text().replace(
+              "export const dynamicParams = true",
+              "export const dynamicParams = false",
+              1,
+          ))
+          PY
+          pnpm build
+          touch out/.nojekyll
+          python3 - <<'PY'
+          from pathlib import Path
+          page = Path("out/404.html")
+          html = page.read_text()
+          script = """<script>
+          (function () {
+            var match = location.pathname.match(/\\/products\\/([^/]+)\\/?$/);
+            if (!match || match[1] === "placeholder") return;
+            var query = new URLSearchParams(location.search);
+            query.set("id", decodeURIComponent(match[1]));
+            var next = location.pathname.replace(/\\/products\\/[^/]+\\/?$/, "/products/placeholder/");
+            location.replace(next + "?" + query.toString());
+          })();
+          </script>"""
+          if "products/placeholder" not in html:
+              page.write_text(html.replace("<head>", "<head>" + script, 1))
+          PY
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
