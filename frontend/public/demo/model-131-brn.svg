@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" width="640" height="480">
+<rect width="640" height="480" fill="#f5f5f5"/>
+<ellipse cx="330" cy="400" rx="250" ry="18" fill="#000" opacity="0.08"/>
+<path d="M90 330 C 60 300, 80 250, 140 240 L 250 232 C 300 228, 340 200, 380 160 C 400 140, 430 140, 450 165 C 480 205, 520 240, 575 262 C 610 276, 612 320, 580 332 L 120 345 C 100 346, 92 340, 90 330 Z" fill="#6B4226"/>
+<path d="M98 332 L 582 318 C 600 322, 600 350, 575 356 L 120 366 C 96 362, 90 346, 98 332 Z" fill="#2a2a2a"/>
+<path d="M250 236 C 300 232, 340 205, 380 165" stroke="#ffffff" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.9"/>
+<path d="M300 236 L 330 300 M 340 222 L 365 290 M 380 205 L 400 282" stroke="#ffffff" stroke-width="6" opacity="0.6"/>
+<text x="24" y="460" font-family="Inter, Helvetica, Arial, sans-serif" font-size="18" fill="#777">Birkenstock Demo Arizona Sandal · fictional demo product</text>
+</svg>

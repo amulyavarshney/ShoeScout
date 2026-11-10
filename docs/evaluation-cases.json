@@ -1,0 +1,22 @@
+[
+  {"id": "T01", "input": "I want red Nike shoes.", "expect": {"route": "attribute", "brand": "Nike", "color": "red", "min_results": 3, "asks_size": true}},
+  {"id": "T02", "input": "Size 9.", "expect": {"preserves": ["brand", "color"], "size": "9", "size_specific_stock": true}},
+  {"id": "T03", "input": "Show cheaper ones.", "expect": {"preserves": ["brand", "color", "size"], "sort": "price_asc", "max_price_below_previous_max": true}},
+  {"id": "T04", "input": "Actually blue.", "expect": {"color": "blue", "preserves": ["brand", "size"]}},
+  {"id": "T05", "input": "Is MODEL-101 available?", "expect": {"route": "exact_model", "no_vector_search": true}},
+  {"id": "T06", "input": "Which nearest store has this in size 9?", "expect": {"without_location": "asks_for_location", "with_location": "distance_sorted"}},
+  {"id": "T07", "input": "<deny geolocation>", "expect": {"offers_postcode": true, "no_nearest_label": true}},
+  {"id": "T08", "input": "Do you have MODEL-108 in size 9?", "expect": {"size_unavailable_explained": true, "alternatives_labelled": true, "alt_sizes_include": ["10"]}},
+  {"id": "T09", "input": "Comfortable shoes for standing all day", "expect": {"route": "text", "no_comfort_guarantee": true}},
+  {"id": "T10", "input": "<300 ms pause mid-sentence>", "expect": {"finalize": false}},
+  {"id": "T11", "input": "<800 ms silence after speech>", "expect": {"commits": 1, "llm_calls": 1}},
+  {"id": "T12", "input": "<repeated STT partials>", "expect": {"interim_updates": true, "duplicate_user_messages": false}},
+  {"id": "T13", "input": "<inventory failure>", "expect": {"stock_status": "unknown", "false_in_stock": false}},
+  {"id": "T14", "input": "<invalid tool args>", "expect": {"executed": false, "safe_error": true}},
+  {"id": "T15", "input": "<no provider keys>", "expect": {"mode": "mock", "labelled_demo": true}},
+  {"id": "T16", "input": "<save API key>", "expect": {"encrypted_at_rest": true, "masked": true, "absent_from_client": true}},
+  {"id": "T17", "input": "<replace key mid-session>", "expect": {"config_version_bumped": true, "no_mixed_key_turn": true}},
+  {"id": "T18", "input": "red (MODEL-102 has red + blue colourways)", "expect": {"only_red_group_returned": true}},
+  {"id": "T19", "input": "<image URL changes>", "expect": {"requeued_groups": 1}},
+  {"id": "T20", "input": "<interrupt during TTS>", "expect": {"stale_audio_stopped": true, "new_turn_prioritised": true}}
+]
