@@ -135,7 +135,7 @@ export class VoiceSessionManager {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
     this.stopListening()
     this.stopSpeaking()
-    this.ws?.send(JSON.stringify({ type: "session.stop" }))
+    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: "session.stop" }))
     this.ws?.close()
     this.ws = null
   }

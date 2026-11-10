@@ -5,6 +5,8 @@ import { useTexture } from "@react-three/drei"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import * as THREE from "three"
 
+import { publicAsset } from "@/lib/public-asset"
+
 export type AgentState = null | "thinking" | "listening" | "talking"
 
 type OrbProps = {
@@ -98,9 +100,7 @@ function Scene({
   const targetColor1Ref = useRef(new THREE.Color(colors[0]))
   const targetColor2Ref = useRef(new THREE.Color(colors[1]))
   const animSpeedRef = useRef(0.1)
-  const perlinNoiseTexture = useTexture(
-    "/perlin-noise.png"
-  )
+  const perlinNoiseTexture = useTexture(publicAsset("/perlin-noise.png"))
 
   const agentRef = useRef<AgentState>(agentState)
   const modeRef = useRef<"auto" | "manual">(volumeMode)

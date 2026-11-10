@@ -6,11 +6,13 @@ import { CheckIcon, ImageOffIcon, MapPinIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { formatPrice, type ProductCardData } from "@/lib/api"
+import { publicAsset } from "@/lib/public-asset"
 import { cn } from "@/lib/utils"
 
 export function ProductImage({ src, alt, className, sizes = "(max-width: 768px) 80vw, 320px" }: { src: string | null; alt: string; className?: string; sizes?: string }) {
-  const ok = src && (src.startsWith("/") || src.startsWith("http"))
-  const broken = !ok || src.includes("example.invalid")
+  const resolved = src?.startsWith("/") ? publicAsset(src) : src
+  const ok = resolved && (resolved.startsWith("/") || resolved.startsWith("http"))
+  const broken = !ok || resolved?.includes("example.invalid")
   return (
     <div className={cn("bg-muted relative aspect-[4/3] w-full overflow-hidden", className)}>
       {broken ? (
@@ -19,7 +21,7 @@ export function ProductImage({ src, alt, className, sizes = "(max-width: 768px) 
           Image unavailable
         </div>
       ) : (
-        <Image src={src!} alt={alt} fill unoptimized sizes={sizes} className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+        <Image src={resolved!} alt={alt} fill unoptimized sizes={sizes} className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
       )}
     </div>
   )

@@ -1,4 +1,7 @@
+import { publicAsset } from "@/lib/public-asset"
+
 /** Microphone capture → 16 kHz PCM16 frames via AudioWorklet. Exposes a live level (0..1) for the Orb/waveform. */
+
 export type FrameHandler = (pcm: ArrayBuffer, level: number) => void
 
 export class AudioCapture {
@@ -17,7 +20,7 @@ export class AudioCapture {
       audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     })
     this.ctx = new AudioContext()
-    await this.ctx.audioWorklet.addModule("/worklets/pcm-processor.js")
+    await this.ctx.audioWorklet.addModule(publicAsset("/worklets/pcm-processor.js"))
     const source = this.ctx.createMediaStreamSource(this.stream)
     this.node = new AudioWorkletNode(this.ctx, "pcm-processor")
     this.node.port.onmessage = (e: MessageEvent) => {
