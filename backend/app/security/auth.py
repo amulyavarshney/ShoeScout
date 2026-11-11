@@ -7,6 +7,7 @@ import hmac
 import json
 import secrets
 import time
+from urllib.parse import urlparse
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -77,16 +78,34 @@ def _sign(payload: bytes) -> str:
     return base64.urlsafe_b64encode(hmac.new(_auth_secret(), payload, hashlib.sha256).digest()).decode().rstrip("=")
 
 
+def _cookie_flags(secure: bool) -> tuple[bool, str]:
+    """Pages on github.io calls the API on another site, so that cookie must be SameSite=None."""
+    host = (urlparse(get_settings().frontend_origin).hostname or "").lower()
+    if host not in {"", "localhost", "127.0.0.1"}:
+        return True, "None"
+    return secure, "Lax"
+
+
+def _write_cookie(response: Response, value: str, max_age: int, *, secure: bool) -> None:
+    cookie_secure, samesite = _cookie_flags(secure)
+    parts = [f"{COOKIE_NAME}={value}", "HttpOnly", "Path=/", f"Max-Age={max_age}", f"SameSite={samesite}"]
+    if cookie_secure:
+        parts.append("Secure")
+    if samesite == "None":
+        parts.append("Partitioned")
+    response.headers.append("set-cookie", "; ".join(parts))
+
+
 def issue_session(response: Response, username: str, *, secure: bool) -> str:
     csrf = secrets.token_urlsafe(24)
     payload = json.dumps({"u": username, "exp": time.time() + SESSION_TTL, "csrf": csrf, "n": secrets.token_hex(8)}).encode()
     token = base64.urlsafe_b64encode(payload).decode().rstrip("=") + "." + _sign(payload)
-    response.set_cookie(COOKIE_NAME, token, httponly=True, secure=secure, samesite="lax", max_age=SESSION_TTL, path="/")
+    _write_cookie(response, token, SESSION_TTL, secure=secure)
     return csrf
 
 
 def clear_session(response: Response) -> None:
-    response.delete_cookie(COOKIE_NAME, path="/")
+    _write_cookie(response, "", 0, secure=get_settings().is_production)
 
 
 def read_session(request: Request) -> dict | None:

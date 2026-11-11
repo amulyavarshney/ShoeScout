@@ -50,6 +50,7 @@ export class VoiceSessionManager {
   private pendingTurn: string | null = null
   private speechRecognition: SpeechRecognition | null = null
   private synthUtterance: SpeechSynthesisUtterance | null = null
+  private speechGeneration = 0
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private closedByUser = false
   private reconnectAttempts = 0
@@ -324,6 +325,7 @@ export class VoiceSessionManager {
   }
 
   stopSpeaking() {
+    this.speechGeneration += 1
     this.playback.stop()
     if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel()
     this.synthUtterance = null
@@ -390,15 +392,26 @@ export class VoiceSessionManager {
 
   private speakInBrowser(text: string) {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return this.setState("idle")
+    const generation = ++this.speechGeneration
+    // Chrome interrupts an utterance spoken in the same turn as cancel().
     window.speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    u.lang = navigator.language || "en-GB"
-    u.rate = 1.03
-    u.onend = () => this.afterSpeaking()
-    u.onerror = () => this.afterSpeaking()
-    this.synthUtterance = u
-    this.setState("speaking")
-    window.speechSynthesis.speak(u)
+    window.setTimeout(() => {
+      if (generation !== this.speechGeneration) return
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = navigator.language || "en-GB"
+      utterance.rate = 1.03
+      utterance.onend = () => {
+        if (generation === this.speechGeneration) this.afterSpeaking()
+      }
+      utterance.onerror = (event) => {
+        const error = (event as SpeechSynthesisErrorEvent).error
+        if (error === "interrupted" || error === "canceled") return
+        if (generation === this.speechGeneration) this.afterSpeaking()
+      }
+      this.synthUtterance = utterance
+      this.setState("speaking")
+      window.speechSynthesis.speak(utterance)
+    }, 50)
   }
 
   selectVariant(variantId: string | null) {
